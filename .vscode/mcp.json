@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "words-java": {
+      "type": "http",
+      "url": "https://YOUR_MCP_HOST/YOUR_MCP_ENDPOINT"
+    }
+  }
+}

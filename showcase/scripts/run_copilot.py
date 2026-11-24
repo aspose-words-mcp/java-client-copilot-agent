@@ -34,6 +34,30 @@ def file_digest(path):
     return value.hexdigest()
 
 
+def cli_command(binary, windows=None):
+    """Return the argv prefix that starts the Copilot CLI.
+
+    On Windows, npm installs the CLI as a .cmd shim. cmd.exe cuts arguments at the first
+    newline and rewrites quotes, which breaks multi-line repair prompts, so the CLI's own
+    script is run with node instead. Native executables are used as they are.
+    """
+    windows = os.name == 'nt' if windows is None else windows
+    path = Path(binary)
+    if not windows or path.suffix.lower() not in {'.cmd', '.bat'}:
+        return [binary]
+    package = path.parent/'node_modules'/'@github'/'copilot'
+    try:
+        manifest = json.loads((package/'package.json').read_text(encoding='utf-8'))
+        entry = manifest['bin']['copilot'] if isinstance(manifest['bin'], dict) else manifest['bin']
+    except (OSError, ValueError, KeyError, TypeError):
+        entry = None
+    node = shutil.which('node')
+    if entry and node and (package/entry).is_file():
+        return [node, str(package/entry)]
+    raise ValueError(f'{binary} is a batch shim and its node entry point was not found under {package}. '
+                     'Install the native CLI (winget install GitHub.Copilot) or reinstall with npm.')
+
+
 @contextlib.contextmanager
 def run_lock(destination):
     """Exclusive, crash-safe lock: one process per run (POSIX flock or Windows msvcrt)."""
@@ -111,6 +135,10 @@ def main():
     binary = shutil.which('copilot')
     if not binary:
         parser.error('copilot not found on PATH.')
+    try:
+        cli = cli_command(binary)
+    except ValueError as exc:
+        parser.error(str(exc))
     agent = (ROOT/'.github/agents/aspose-words-java-mcp.agent.md').read_text(encoding='utf-8')
     reader = (ROOT/'showcase/scripts/read_mcp_response.py').read_text(encoding='utf-8')
     instructions = (ROOT/'.github/copilot-instructions.md').read_text(encoding='utf-8')
@@ -186,13 +214,17 @@ def main():
             (workspace/'examples/README.md').write_text(controller_rule, encoding='utf-8')
             (workspace/'showcase/scripts').mkdir(parents=True)
             (workspace/'showcase/scripts/read_mcp_response.py').write_text(reader, encoding='utf-8')
-            run_cases(args, cases, binary, server, replay_answer, run, workspace, destination, config, state)
+            run_cases(args, cases, cli, server, replay_answer, run, workspace, destination, config, state)
     finally:
         lock.__exit__(None, None, None)
 
 
 def run_cases(args, cases, binary, server, replay_answer, run, workspace, destination, config, state):
     records = state['records']
+    prefix = list(binary) if isinstance(binary, (list, tuple)) else [binary]
+    # Pass the MCP server as a file (@path): JSON on the command line does not survive Windows quoting.
+    mcp_config = Path(run)/'mcp-config.json'
+    mcp_config.write_text(json.dumps({'mcpServers': {'words-java': server}}), encoding='utf-8')
     previous_elapsed = state['elapsed']
     run_started = time.monotonic()
     interrupted = False
@@ -213,11 +245,11 @@ def run_cases(args, cases, binary, server, replay_answer, run, workspace, destin
             output.mkdir(exist_ok=True)
             record_path = output/'result.json'
             session_id = str(uuid.uuid4())
-            command = [binary, '-C', str(workspace), '--trust-folder',
+            command = [*prefix, '-C', str(workspace), '--trust-folder',
                        '--agent', 'aspose-words-java-mcp', '--model', args.model,
                        '--name', session_id, '--no-ask-user', '--no-auto-update',
                        '--disable-builtin-mcps', '--disable-mcp-server', 'ide',
-                       '--additional-mcp-config', json.dumps({'mcpServers': {'words-java': server}}),
+                       '--additional-mcp-config', '@' + str(mcp_config),
                        '--allow-tool=words-java', '--allow-tool=shell(python3:*)',
                        '--allow-tool=shell(python:*)', '--allow-tool=shell(py:*)',
                        '--allow-tool=shell(jq:*)', '--allow-tool=shell(head:*)',

@@ -6,7 +6,7 @@ Run saved questions in fresh Copilot CLI sessions and produce three files under 
 - `checkpoint.json`: compact answers, outcomes, and configuration for resuming. No raw traces or compiler logs.
 - `metrics.md`: coverage, first-attempt outcomes, compilation results, generation/repair model counts, repair requests, duration, and concise failure reasons.
 
-To publish a run, name it (or copy its reports to) `published-01`: only `showcase/runs/published-01/showcase.md` and `metrics.md` are included in Git; checkpoints stay local. Use a different run name for new generations. To publish a replacement, select its reports and update the documentation links and Git ignore exceptions together.
+The published run is `published-01`: [showcase](runs/published-01/showcase.md) · [metrics](runs/published-01/metrics.md). Only these two reports are included in Git; its checkpoint stays local. Use a different run name for new generations. To publish a replacement, select its reports and update the documentation links and Git ignore exceptions together.
 
 ## Prerequisites
 

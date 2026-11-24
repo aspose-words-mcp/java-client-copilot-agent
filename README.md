@@ -4,7 +4,7 @@ Use GitHub Copilot Chat to explore Aspose.Words for Java with answers and Java e
 
 This repository provides the **Aspose.Words for Java MCP** custom agent and VS Code client configuration. Deploy the MCP server separately, then connect this client to its HTTP endpoint.
 
-[Setup and troubleshooting](docs/setup.md) · [Build verification](examples/README.md) · [Showcase generation](showcase/README.md)
+[Browse 99 example answers](showcase/runs/published-01/showcase.md) · [Run metrics](showcase/runs/published-01/metrics.md) · [Setup and troubleshooting](docs/setup.md)
 
 ## Project family
 
@@ -34,11 +34,12 @@ The agent queries the server for evidence, checks relevant APIs, and cites docum
 - `.github/copilot-instructions.md`: shared evidence and answer guidance, including Java-specific API conventions.
 - `examples/`: pinned Maven compilation project, Java build rules, and error-correction examples.
 - `.vscode/mcp.json`: HTTP connection configuration with an endpoint placeholder.
-- `showcase/`: question runner with optional compilation/repair and concise showcase and metrics reports, plus the 99 input questions. See [generation instructions](showcase/README.md).
+- `showcase/runs/published-01/`: published questions and answers with their run metrics.
+- `showcase/`: question runner with optional compilation/repair and concise showcase and metrics reports. See [generation instructions](showcase/README.md).
 
 ## Showcase
 
-The [showcase runner](showcase/README.md) answers 99 saved questions in fresh Copilot CLI sessions. The questions cover document conversion, reporting, mail merge, comparison, splitting and merging, find and replace, signatures, watermarks, and AI features. It can compile each Java answer and request up to two repairs. A published run will be added under `showcase/runs/published-01/` after the first full run against a deployed server.
+[Explore the showcase](showcase/runs/published-01/showcase.md) for document conversion, reporting, mail merge, comparison, splitting and merging, find and replace, signatures, watermarks, and AI features. Initial generations use fresh sessions. Each entry identifies the generation model and whether a repair was used. See the [run metrics](showcase/runs/published-01/metrics.md) for compilation outcomes, model usage, repairs, and timing. To generate your own run, see [generation instructions](showcase/README.md).
 
 ## Contributing
 

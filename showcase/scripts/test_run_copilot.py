@@ -106,3 +106,43 @@ class AnalysisTests(unittest.TestCase):
             self.assertIn('Answer refined after a compilation repair.  \nGeneration model: one · Repair model: two', showcase)
             self.assertIn('Fixed', showcase)
             self.assertNotIn('Original', showcase)
+
+
+class CliCommandTests(unittest.TestCase):
+    def test_native_binary_unchanged(self):
+        self.assertEqual(run_copilot.cli_command('/usr/bin/copilot'), ['/usr/bin/copilot'])
+        self.assertEqual(run_copilot.cli_command('C:/tools/copilot.exe', windows=True), ['C:/tools/copilot.exe'])
+
+    def test_windows_cmd_shim_runs_node_entry(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            package = root/'node_modules'/'@github'/'copilot'
+            package.mkdir(parents=True)
+            (package/'package.json').write_text(json.dumps({'bin': {'copilot': 'npm-loader.js'}}), encoding='utf-8')
+            (package/'npm-loader.js').write_text('', encoding='utf-8')
+            with patch('run_copilot.shutil.which', return_value='node.exe'):
+                self.assertEqual(run_copilot.cli_command(str(root/'copilot.cmd'), windows=True),
+                                 ['node.exe', str(package/'npm-loader.js')])
+                with self.assertRaises(ValueError):
+                    run_copilot.cli_command(str(root/'other'/'copilot.cmd'), windows=True)
+
+    def test_mcp_config_passed_as_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            seen = []
+            def invoke(command, cwd, stdout, stderr, timeout):
+                seen.append(command)
+                stdout.write_text(json.dumps({'type': 'assistant.message', 'data': {'content': 'A', 'model': 'm'}}), encoding='utf-8')
+                stderr.write_text('', encoding='utf-8')
+                return {'status': 'completed', 'exit_code': 0}
+            from types import SimpleNamespace
+            args = SimpleNamespace(model='auto', timeout=30, verify_code=False)
+            state = dict(version=1, config={}, cases=[{'query_id': 'q', 'question': 'Q?'}], records=[], elapsed=0)
+            with patch('run_copilot.run_logged', side_effect=invoke), patch('builtins.print'):
+                run_copilot.run_cases(args, state['cases'], ['node', 'cli.js'], {'type': 'http', 'url': 'https://x.test/mcp'},
+                                      None, root, root, root, {}, state)
+            command = seen[0]
+            self.assertEqual(command[:2], ['node', 'cli.js'])
+            value = command[command.index('--additional-mcp-config') + 1]
+            self.assertTrue(value.startswith('@'))
+            self.assertEqual(json.loads(Path(value[1:]).read_text(encoding='utf-8'))['mcpServers']['words-java']['url'], 'https://x.test/mcp')

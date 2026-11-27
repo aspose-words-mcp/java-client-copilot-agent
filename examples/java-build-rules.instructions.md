@@ -1,7 +1,7 @@
 # Java build rules
 
 **Before writing any Java, read `examples/error-correction.md` in this workspace and follow its rules
-J0–J8.** That file has the worked wrong/right example for each rule. The mandatory parts are repeated
+J0–J9.** That file has the worked wrong/right example for each rule. The mandatory parts are repeated
 here so they apply even if you do not open it.
 
 **These rules tell you _how_ to write code, not _whether_ to include it.** If a question asks how to
@@ -29,7 +29,8 @@ Every block must therefore:
   which types to use. Omitting code to stay safe is a failed answer, not a cautious one.
 - **J1** — be a complete, runnable program: exactly one top-level `public class` that declares
   `public static void main(String[] args) throws Exception`. Helper types go after it without
-  `public`, or inside it as `static` nested types. No `package` declaration.
+  `public`, or inside it as `static` nested types. No `package` declaration. Data classes read by
+  `ReportingEngine` must be `public static` nested types (J9).
 - **J2** — import every type it uses with explicit single-type imports. Never combine
   `import com.aspose.words.*;` with `java.util.*` or `java.awt.*`: `List`, `Shape` and `Font` exist in
   both, and the simple name becomes ambiguous.
@@ -46,8 +47,15 @@ Every block must therefore:
   test helpers (`getMyDir()`, `getArtifactsDir()`, `Assert`); use plain file paths.
 - **J8** — when revising an answer, return it complete and reproduce **every** documentation URL the
   original cited. Preserve the original documentation URLs when repairing code; compare them before presenting the revision. Add a URL only from `words-java` evidence retrieved in this session.
+- **J9** — write LINQ Reporting templates that Aspose.Words for Java can evaluate. `javac` never sees a
+  template; the engine parses it at run time. Classes passed to `ReportingEngine.buildReport` (and the
+  types they return) must be `public`; close blocks with `<</if>>` and `<</foreach>>`, never `<<end>>`;
+  over Java objects call getters and lowercase extension methods
+  (`data.getOrders().where(x => x.getTotal() > 100)`, `<<[o.getName()]>>`), not .NET-style
+  `Orders`, `x.Total` or `Where`. JSON and XML data sources use the field names as they appear in the data.
 
 Check once more before answering: does a "how do I" question have a code example at all, and does each
 block have one public class with `main`, explicit imports with no ambiguous wildcards, every identifier
-declared, `throws Exception` where needed, and nothing deprecated or raw? A compiler error is a failed
+declared, `throws Exception` where needed, and nothing deprecated or raw? Does every LINQ Reporting
+template follow J9? A compiler error is a failed
 answer even when the Aspose.Words API usage is correct — and so is no code at all.

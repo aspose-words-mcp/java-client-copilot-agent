@@ -1,6 +1,6 @@
 # Aspose.Words for Java — Copilot Showcase
 
-99 questions and answers generated with GitHub Copilot CLI and the Aspose.Words for Java MCP server, using `java-build-rules.instructions.md` and `error-correction.md`. Java examples were checked for compilation using Aspose.Words for Java 26.10 with Java release 17; see [metrics](metrics.md) for outcomes. Initial generations use fresh sessions.
+99 questions and answers generated with GitHub Copilot CLI and the Aspose.Words for Java MCP server, using `java-build-rules.instructions.md` and `error-correction.md`. Java examples were checked for compilation using Aspose.Words for Java 26.10 with Java release 17; see [metrics](metrics.md) for outcomes. Initial generations use fresh sessions. LINQ Reporting answers were also run against Aspose.Words for Java; four that compiled but failed at run time were corrected by hand and are marked below (see the [runtime check](linq-runtime-check.md)).
 
 [Client setup](../../../README.md#quick-start)
 
@@ -1166,7 +1166,7 @@ Here, only the standalone `Jackson` is replaced; `Jacksonville` is left unchange
 
 ### What is the LINQ Reporting Engine in Aspose.Words?
 
-Answer generated on first attempt.  
+Answer generated on first attempt; corrected after a [runtime check](linq-runtime-check.md).  
 Generation model: mai-code-2-flash
 
 The **LINQ Reporting Engine** is Aspose.Words’ template-based reporting system for generating documents from custom Java objects and other data sources.
@@ -1178,11 +1178,11 @@ A template contains plain-text tags such as:
   Hello, <<[Customer.Name]>>
 <<else>>
   Customer account is inactive
-<<end>>
+<</if>>
 
 <<foreach [in Orders]>>
   <<[Name]>> — <<[Price]>>
-<<end>>
+<</foreach>>
 ```
 
 The engine evaluates expressions, applies loops, conditions, sorting, grouping, charts, HTML insertion, and similar logic, then replaces the tags with document content. The main API class is [`com.aspose.words.ReportingEngine`](https://reference.aspose.com/words/java/com.aspose.words/reportingengine/), with `buildReport(Document, Object)` used to populate a template.
@@ -1239,7 +1239,7 @@ In a real report, design the template in Word and put tags where the data should
 
 ### How to create a Word document from a LINQ Reporting template and data source using Aspose.Words ReportingEngine in Java?
 
-Answer generated on first attempt.  
+Answer generated on first attempt; corrected after a [runtime check](linq-runtime-check.md).  
 Generation model: gpt-6-luna
 
 Use a Word template containing LINQ Reporting tags, pass a Java object as the data source, then save the populated document. For example, put `<<[sender.getName()]>> says: “<<[sender.getMessage()]>>”` in `template.docx` and run:
@@ -1259,11 +1259,11 @@ public class BuildReportFromTemplate {
         document.save("report.docx");
     }
 
-    static final class Sender {
+    public static final class Sender {
         private final String name;
         private final String message;
 
-        Sender(String name, String message) {
+        public Sender(String name, String message) {
             this.name = name;
             this.message = message;
         }
@@ -1279,13 +1279,13 @@ public class BuildReportFromTemplate {
 }
 ```
 
-The `"sender"` argument names the data source for expressions in the template. The engine can also accept multiple data sources; see the [LINQ Reporting Engine API](https://reference.aspose.com/words/java/com.aspose.words/reportingengine/) and [Java Hello World example](https://docs.aspose.com/words/java/hello-world-example/).
+`Sender` is a public nested class: the engine reads the data source by reflection and rejects types that are not visible. The `"sender"` argument names the data source for expressions in the template. The engine can also accept multiple data sources; see the [LINQ Reporting Engine API](https://reference.aspose.com/words/java/com.aspose.words/reportingengine/) and [Java Hello World example](https://docs.aspose.com/words/java/hello-world-example/).
 
 <a id="linq-reporting-04"></a>
 
 ### How to populate a LINQ Reporting template with data using Aspose.Words ReportingEngine.buildReport in Java?
 
-Answer generated on first attempt.  
+Answer generated on first attempt; corrected after a [runtime check](linq-runtime-check.md).  
 Generation model: gpt-6-luna
 
 Use a template containing tags that reference the data source by name, then pass the template and data object to `buildReport` and save the populated document. For example, put `Hello, <<[sender.getName()]>>!` in `template.docx`:
@@ -1304,28 +1304,28 @@ public class BuildReportFromTemplate {
 
         doc.save("report.docx");
     }
-}
 
-class Sender {
-    private final String name;
+    public static class Sender {
+        private final String name;
 
-    Sender(String name) {
-        this.name = name;
-    }
+        public Sender(String name) {
+            this.name = name;
+        }
 
-    public String getName() {
-        return name;
+        public String getName() {
+            return name;
+        }
     }
 }
 ```
 
-The third argument, `"sender"`, is the name used in the template’s expressions. The overload populates the supplied `Document` in place; the returned boolean is meaningful only when inline error messages are enabled. See the [Java example](https://docs.aspose.com/words/java/hello-world-example/), [report-building guide](https://docs.aspose.com/words/java/building-reports/), and [`buildReport` API reference](https://reference.aspose.com/words/java/com.aspose.words/reportingengine/#buildReport-com.aspose.words.Document-java.lang.Object-java.lang.String).
+`Sender` must be public (here a public nested class); the engine rejects data-source types that are not visible. The third argument, `"sender"`, is the name used in the template’s expressions. The overload populates the supplied `Document` in place; the returned boolean is meaningful only when inline error messages are enabled. See the [Java example](https://docs.aspose.com/words/java/hello-world-example/), [report-building guide](https://docs.aspose.com/words/java/building-reports/), and [`buildReport` API reference](https://reference.aspose.com/words/java/com.aspose.words/reportingengine/#buildReport-com.aspose.words.Document-java.lang.Object-java.lang.String).
 
 <a id="linq-reporting-05"></a>
 
 ### How to use LINQ expressions in a Word document template?
 
-Answer generated on first attempt.  
+Answer generated on first attempt; corrected after a [runtime check](linq-runtime-check.md).  
 Generation model: gpt-6-luna
 
 Use Aspose.Words’ **LINQ Reporting Engine**: put its plain-text tags in the Word template, then pass the template and your Java data object to `ReportingEngine.buildReport`.
@@ -1334,8 +1334,8 @@ For example, add this text to `template.docx`:
 
 ```text
 Orders over 100:
-<<foreach [o in data.Orders.Where(x => x.Total > 100)]>>
-<<[o.Name]>> — <<[o.Total]>>
+<<foreach [o in data.getOrders().where(x => x.getTotal() > 100)]>>
+<<[o.getName()]>> — <<[o.getTotal()]>>
 <</foreach>>
 ```
 
@@ -1357,40 +1357,40 @@ public class CreateReport {
         new ReportingEngine().buildReport(doc, new ReportData(orders), "data");
         doc.save("report.docx");
     }
-}
 
-class ReportData {
-    private final List<Order> orders;
+    public static class ReportData {
+        private final List<Order> orders;
 
-    ReportData(List<Order> orders) {
-        this.orders = orders;
+        public ReportData(List<Order> orders) {
+            this.orders = orders;
+        }
+
+        public List<Order> getOrders() {
+            return orders;
+        }
     }
 
-    public List<Order> getOrders() {
-        return orders;
-    }
-}
+    public static class Order {
+        private final String name;
+        private final int total;
 
-class Order {
-    private final String name;
-    private final int total;
+        public Order(String name, int total) {
+            this.name = name;
+            this.total = total;
+        }
 
-    Order(String name, int total) {
-        this.name = name;
-        this.total = total;
-    }
+        public String getName() {
+            return name;
+        }
 
-    public String getName() {
-        return name;
-    }
-
-    public int getTotal() {
-        return total;
+        public int getTotal() {
+            return total;
+        }
     }
 }
 ```
 
-The engine evaluates expressions against the supplied data source; `Where` filters the sequence, and `foreach` repeats its template block for each result. See the [Java template syntax](https://docs.aspose.com/words/java/outputting-sequential-data/), [extension methods](https://docs.aspose.com/words/java/using-extension-methods/), and [`buildReport` API](https://reference.aspose.com/words/java/com.aspose.words/reportingengine/).
+The engine evaluates expressions against the supplied data source. With Java objects, template expressions call the getters (`getOrders()`, `getTotal()`) and use the lowercase extension methods (`where`); the data classes must be public. `where` filters the sequence, and `foreach` repeats its template block for each result. See the [Java template syntax](https://docs.aspose.com/words/java/outputting-sequential-data/), [extension methods](https://docs.aspose.com/words/java/using-extension-methods/), and [`buildReport` API](https://reference.aspose.com/words/java/com.aspose.words/reportingengine/).
 
 <a id="linq-reporting-06"></a>
 

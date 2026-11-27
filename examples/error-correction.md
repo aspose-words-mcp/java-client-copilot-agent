@@ -99,7 +99,7 @@ public class ReportGenerator {
 ```
 
 ```java
-// RIGHT — one public class with main; helper types are not public and come after it
+// RIGHT — one public class with main; the data class is a public static nested type (see J9)
 import com.aspose.words.Document;
 import com.aspose.words.ReportingEngine;
 
@@ -110,21 +110,24 @@ public class GenerateReport {
         new ReportingEngine().buildReport(doc, sender, "sender");
         doc.save("report.docx");
     }
-}
 
-class Sender {
-    private final String name;
-    private final String message;
+    public static class Sender {
+        private final String name;
+        private final String message;
 
-    Sender(String name, String message) {
-        this.name = name;
-        this.message = message;
+        public Sender(String name, String message) {
+            this.name = name;
+            this.message = message;
+        }
+
+        public String getName() { return name; }
+        public String getMessage() { return message; }
     }
-
-    public String getName() { return name; }
-    public String getMessage() { return message; }
 }
 ```
+
+Other helper types may come after the public class without `public`; data classes read by
+`ReportingEngine` may not (J9).
 
 ### J2 — Explicit single-type imports; no ambiguous wildcards
 
@@ -340,6 +343,94 @@ documentation URL the original contained. Before presenting a repair, compare it
 
 *Preserves the evidence accompanying the corrected answer.*
 
+### J9 — LINQ Reporting templates must also work at run time
+
+A LINQ Reporting template is text inside the document. `javac` never sees it; `ReportingEngine.buildReport`
+parses it when the program runs, so a template mistake compiles cleanly and then throws. Each failure below
+was observed with Aspose.Words for Java 26.10.
+
+- The data source and every object the template reaches through it must be of a **public** type. A
+  package-private class, or a nested class without `public`, fails with
+  `IllegalArgumentException: A data source object must be of a visible type`.
+- Close blocks with `<</if>>` and `<</foreach>>`. `<<end>>` fails with `IllegalStateException: Token 'end' is unexpected`.
+- Over Java objects, call the getters and use the lowercase extension methods. .NET-style member names
+  (`data.Orders`, `x.Total`) and `Where` fail with `IllegalStateException: An error has been encountered at the end of expression`.
+- JSON and XML data sources (`JsonDataSource`, `XmlDataSource`) use the field names exactly as they appear in the data.
+
+WRONG — template and data class as .NET would write them:
+
+```text
+<<foreach [o in data.Orders.Where(x => x.Total > 100)]>>
+<<[o.Name]>> — <<[o.Total]>>
+<<end>>
+```
+
+```java
+// WRONG — compiles, but ReportData and Order are not visible to the engine
+import com.aspose.words.Document;
+import com.aspose.words.ReportingEngine;
+import java.util.List;
+
+public class CreateReport {
+    public static void main(String[] args) throws Exception {
+        Document doc = new Document("template.docx");
+        new ReportingEngine().buildReport(doc, new ReportData(List.of(new Order("Notebook", 150))), "data");
+        doc.save("report.docx");
+    }
+}
+
+class ReportData {
+    private final List<Order> orders;
+    ReportData(List<Order> orders) { this.orders = orders; }
+    public List<Order> getOrders() { return orders; }
+}
+
+class Order {
+    private final String name;
+    private final int total;
+    Order(String name, int total) { this.name = name; this.total = total; }
+    public String getName() { return name; }
+    public int getTotal() { return total; }
+}
+```
+
+RIGHT — getters, lowercase `where`, proper closing tag, public nested data classes:
+
+```text
+<<foreach [o in data.getOrders().where(x => x.getTotal() > 100)]>>
+<<[o.getName()]>> — <<[o.getTotal()]>>
+<</foreach>>
+```
+
+```java
+// RIGHT
+import com.aspose.words.Document;
+import com.aspose.words.ReportingEngine;
+import java.util.List;
+
+public class CreateReport {
+    public static void main(String[] args) throws Exception {
+        Document doc = new Document("template.docx");
+        new ReportingEngine().buildReport(doc, new ReportData(List.of(new Order("Notebook", 150))), "data");
+        doc.save("report.docx");
+    }
+
+    public static class ReportData {
+        private final List<Order> orders;
+        public ReportData(List<Order> orders) { this.orders = orders; }
+        public List<Order> getOrders() { return orders; }
+    }
+
+    public static class Order {
+        private final String name;
+        private final int total;
+        public Order(String name, int total) { this.name = name; this.total = total; }
+        public String getName() { return name; }
+        public int getTotal() { return total; }
+    }
+}
+```
+
 ## Before you answer
 
 First: if the question asked how to do something and your answer contains no `java` block, that is a
@@ -353,6 +444,7 @@ Then re-read each `java` block once, as if it were the only file in an empty pro
 4. Does every method that calls Aspose.Words declare `throws Exception`?
 5. Do its own class names avoid Aspose.Words type names?
 6. Is everything free of deprecated APIs, raw types and post-Java-17 syntax?
+7. If it uses `ReportingEngine`: are the data classes public, and does the template follow J9?
 
 If any answer is no, fix the block before you send it. A compiler error is a failed answer even when the
 Aspose.Words API usage is perfectly correct.

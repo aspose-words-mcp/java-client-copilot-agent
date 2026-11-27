@@ -22,3 +22,4 @@ showcase/runs/*
 showcase/runs/published-01/*
 !showcase/runs/published-01/showcase.md
 !showcase/runs/published-01/metrics.md
+!showcase/runs/published-01/linq-runtime-check.md

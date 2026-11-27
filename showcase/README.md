@@ -6,7 +6,7 @@ Run saved questions in fresh Copilot CLI sessions and produce three files under 
 - `checkpoint.json`: compact answers, outcomes, and configuration for resuming. No raw traces or compiler logs.
 - `metrics.md`: coverage, first-attempt outcomes, compilation results, generation/repair model counts, repair requests, duration, and concise failure reasons.
 
-The published run is `published-01`: [showcase](runs/published-01/showcase.md) · [metrics](runs/published-01/metrics.md). Only these two reports are included in Git; its checkpoint stays local. Use a different run name for new generations. To publish a replacement, select its reports and update the documentation links and Git ignore exceptions together.
+The published run is `published-01`: [showcase](runs/published-01/showcase.md) · [metrics](runs/published-01/metrics.md) · [LINQ Reporting runtime check](runs/published-01/linq-runtime-check.md). Only these reports are included in Git; its checkpoint stays local. Use a different run name for new generations. To publish a replacement, select its reports and update the documentation links and Git ignore exceptions together.
 
 ## Prerequisites
 
@@ -57,6 +57,16 @@ Generation completion is separate from compilation success. No-code and unchecke
 Each `java` block is compiled on its own as `<PublicClassName>.java`. A block that compiles but declares no `public static void main(String[] args)` is recorded as failed with the diagnostic `missing-main`, because the rules require runnable programs. Compiler diagnostics are recorded by their javac keys (for example `compiler.err.cant.resolve.location`) and passed to the repair request.
 
 The runner snapshots this repository's evidence and code-quality guidance into a temporary workspace, with a controller-specific instruction that compilation/repair is handled outside the model session. The model is denied file writing; generated Java is compiled but never executed. Repairs preserve original citation URLs and accept new URLs only from successful words-java repair evidence. Runtime behavior is recorded as `Not checked` in the metrics table. If repair fails, the original answer remains in the showcase and the metrics report records the failure.
+
+## LINQ Reporting runtime check
+
+Compilation cannot catch LINQ Reporting mistakes: `ReportingEngine` parses the `<<...>>` template tags when the program runs. After a run, check the LINQ Reporting answers and the J1/J9 rule examples against the real jar (JDK 17+ and the Aspose.Words jar as for compilation):
+
+```sh
+python3 showcase/scripts/check_linq_runtime.py
+```
+
+For each `linq-reporting-*` answer it builds the template the answer describes, runs the answer's Java code (or a `JsonDataSource` with matching data for a template given only in prose), and checks the generated document for leftover tags and the expected values. The report is written next to the showcase as `linq-runtime-check.md`; working files stay in `showcase/runs/linq-check/` (ignored by Git). The published run's [runtime check](runs/published-01/linq-runtime-check.md) is included with its reports. Four answers of `published-01` failed this check and were corrected by hand; they are marked in the showcase.
 
 ## Local tests
 
